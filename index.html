@@ -1742,6 +1742,9 @@ function attachPanZoom(){
   if(PAN===null){
     area.dataset.sx=0;area.dataset.sy=0;area.dataset.z=1;
   }
+  // 防止重复绑定：只绑定一次事件监听器
+  if(area.dataset.panBound==='1')return;
+  area.dataset.panBound='1';
   let drag=false,lx=0,ly=0;
 
   // === 鼠标事件（桌面端） ===
@@ -1762,7 +1765,7 @@ function attachPanZoom(){
     updateTransform();
   };
 
-  // === 触摸事件（手机端） ===
+  // === 触摸事件（手机端）- 跟随手指 ===
   let touchDragging=false, touchPinching=false;
   let lastTouchX=0, lastTouchY=0;
   let lastPinchDist=0;
@@ -1770,7 +1773,7 @@ function attachPanZoom(){
 
   area.addEventListener('touchstart',(e)=>{
     if(e.touches.length===1){
-      // 单指：拖拽地图
+      // 单指：拖拽地图 - 记录起始位置
       touchDragging=true;touchPinching=false;
       lastTouchX=e.touches[0].clientX;
       lastTouchY=e.touches[0].clientY;
@@ -1799,9 +1802,10 @@ function attachPanZoom(){
       }
       lastPinchDist=dist;
     } else if(touchDragging && e.touches.length===1){
+      // 跟随手指：手指向右拖，地图向右移
       const dx=e.touches[0].clientX-lastTouchX;
       const dy=e.touches[0].clientY-lastTouchY;
-      if(Math.abs(dx)>3||Math.abs(dy)>3)touchMoved=true; // 标记为拖拽而非点击
+      if(Math.abs(dx)>2||Math.abs(dy)>2)touchMoved=true;
       lastTouchX=e.touches[0].clientX;
       lastTouchY=e.touches[0].clientY;
       area.dataset.sx=((+area.dataset.sx)||0)+dx;
@@ -1813,18 +1817,19 @@ function attachPanZoom(){
 
   area.addEventListener('touchend',(e)=>{
     if(!touchMoved && !touchPinching){
-      // 没有拖拽，保持点击行为（省份/军队的onclick会处理）
-      // 关闭可能打开的右侧信息栏
       if(window.innerWidth<=640) closeRightbar();
     }
     touchDragging=false;touchPinching=false;touchMoved=false;
   },{passive:true});
+}
 
-  function updateTransform(){
-    const sx=area.dataset.sx||0,sy=area.dataset.sy||0,z=area.dataset.z||1;
-    svg.style.transform=`translate(${sx}px, ${sy}px) scale(${z})`;
-    svg.style.transformOrigin='0 0';
-  }
+// 全局 updateTransform 函数（供按钮和事件共用）
+function updateTransform(){
+  const area=$('mapArea'), svg=$('svgMap');
+  if(!area||!svg)return;
+  const sx=area.dataset.sx||0,sy=area.dataset.sy||0,z=area.dataset.z||1;
+  svg.style.transform='translate('+sx+'px, '+sy+'px) scale('+z+')';
+  svg.style.transformOrigin='0 0';
 }
 function onMapClick(pid){
   // 如果有选中军队，尝试移动/进攻
@@ -1974,10 +1979,29 @@ function _bindRegionToolbar(){
   const btnClose = document.getElementById('btnCloseMapOverlay');
   if(btnClose && !btnClose.dataset.bound){
     btnClose.dataset.bound='1';
-    btnClose.addEventListener('click', ()=>{
-      // If map overlay is visible (hide map-overlay-page, hide itself else just scroll page
-      const ovl = document.getElementById('map-overlay-page');
-      if(ovl) ovl.classList.remove('active');
+    btnClose.addEventListener('click', function(){
+      const tb = document.getElementById('regionToolbar');
+      if(!tb) return;
+      if(tb.style.display==='none'){
+        // 显示工具栏
+        tb.style.display='flex';
+        btnClose.textContent='✕';
+        btnClose.style.position='';
+        btnClose.style.top='';
+        btnClose.style.right='';
+        btnClose.style.zIndex='';
+        btnClose.style.marginLeft='6px';
+      }else{
+        // 隐藏工具栏，按钮移到右上角固定
+        tb.style.display='none';
+        btnClose.textContent='☰';
+        btnClose.style.position='fixed';
+        btnClose.style.top='8px';
+        btnClose.style.right='8px';
+        btnClose.style.zIndex='50';
+        btnClose.style.marginLeft='0';
+        document.body.appendChild(btnClose); // 移到body下确保可见
+      }
     });
   }
   const lbl = document.getElementById('mapTurnLabel');
