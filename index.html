@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新秩序的黄昏 · TNO 策略推演</title>
+<style>
+  :root{
+    --bg:#0c0d10; --bg2:#14161b; --panel:#1a1d24; --panel2:#222631;
+    --border:#2e3340; --txt:#d8dce4; --dim:#8a91a0; --gold:#c9a24a;
+    --red:#a83232; --red2:#c44545; --blue:#3a5a8a; --blue2:#4a7ab5;
+    --green:#3a7a4a; --warn:#c97a2a; --ss:#5a2a6a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:var(--bg);color:var(--txt);
+    font-family:"PingFang SC","Microsoft YaHei","Noto Sans CJK SC",Helvetica,Arial,sans-serif;
+    font-size:14px;line-height:1.6;overflow:hidden;
+  }
+  button{font-family:inherit;cursor:pointer;color:var(--txt);border:none;background:none}
+  ::-webkit-scrollbar{width:8px;height:8px}
+  ::-webkit-scrollbar-track{background:var(--bg2)}
+  ::-webkit-scrollbar-thumb{background:#3a3f4d;border-radius:4px}
+  ::-webkit-scrollbar-thumb:hover{background:#4a5060}
+
+  /* ====== 开始界面 ====== */
+  #startScreen{
+    position:fixed;inset:0;overflow-y:auto;padding:40px 20px;
+    background:
+      radial-gradient(ellipse at top, #1a2030 0%, var(--bg) 60%),
+      linear-gradient(180deg,#08090b,#0c0d10);
+  }
+  .start-wrap{max-width:760px;margin:0 auto}
+  .start-title{text-align:center;margin-bottom:24px}
+  .start-title .era{color:var(--gold);letter-spacing:4px;font-size:13px}
+  .start-title h1{font-size:38px;color:var(--txt);margin:8px 0 4px;font-weight:700;letter-spacing:2px}
+  .start-title .sub{color:var(--dim);font-size:14px;letter-spacing:6px}
+  .prologue{
+    background:var(--panel);border:1px solid var(--border);border-radius:8px;
+    padding:28px;margin-bottom:24px;line-height:2;
+  }
+  .prologue h3{color:var(--gold);font-size:18px;margin-bottom:14px;border-left:3px solid var(--gold);padding-left:10px}
+  .prologue h4{color:var(--red2);font-size:15px;margin:18px 0 8px}
+  .prologue p{color:#b8bdc8;margin-bottom:10px;text-indent:2em;font-size:14px}
+  .prologue ul{margin:8px 0 8px 2em}
+  .prologue li{color:#b8bdc8;margin-bottom:6px;font-size:14px}
+  .prologue .epi{text-align:center;color:var(--gold);font-style:italic;margin-top:18px;font-size:15px}
+  .section-label{color:var(--dim);font-size:13px;margin:20px 0 10px;letter-spacing:2px}
+  .opt-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:18px}
+  .opt-grid.full{grid-template-columns:1fr}
+  .opt-btn{
+    background:var(--panel);border:1px solid var(--border);border-radius:6px;
+    padding:14px;text-align:left;transition:all .15s;
+  }
+  .opt-btn:hover{border-color:var(--gold);background:var(--panel2)}
+  .opt-btn.sel{border-color:var(--gold);background:var(--panel2);box-shadow:0 0 0 1px var(--gold) inset}
+  .opt-btn .ot{font-size:15px;color:var(--txt);font-weight:600;margin-bottom:2px}
+  .opt-btn .od{font-size:12px;color:var(--dim)}
+  .opt-btn.locked{opacity:.4;cursor:not-allowed}
+  .start-actions{display:flex;gap:10px;justify-content:center;margin-top:24px;flex-wrap:wrap}
+  .btn-primary{
+    background:linear-gradient(180deg,var(--red2),var(--red));color:#fff;
+    padding:12px 32px;border-radius:6px;font-size:15px;font-weight:600;letter-spacing:2px;
+  }
+  .btn-primary:hover{filter:brightness(1.15)}
+  .btn-ghost{
+    background:var(--panel);border:1px solid var(--border);color:var(--txt);
+    padding:12px 24px;border-radius:6px;font-size:14px;
+  }
+  .btn-ghost:hover{border-color:var(--gold)}
+  .disclaimer{text-align:center;color:var(--dim);font-size:11px;margin-top:24px;line-height:1.8}
+
+  /* ====== 游戏主界面 ====== */
+  #gameScreen{display:none;height:100%;flex-direction:column}
+  /* 顶栏资源 */
+  .topbar{
+    background:linear-gradient(180deg,#0a0b0e,#101218);
+    border-bottom:1px solid var(--border);padding:6px 12px;
+    display:flex;align-items:center;gap:6px;flex-wrap:wrap;flex-shrink:0;
+  }
+  .flag{font-size:16px;margin-right:4px}
+  .nat-name{font-weight:700;color:var(--gold);margin-right:12px;font-size:15px}
+  .diff-tag,.mode-tag{font-size:11px;padding:2px 8px;border-radius:3px;background:var(--panel2);color:var(--dim);margin-right:6px}
+  .leader-info{font-size:12px;color:var(--dim);margin-right:auto}
+  .leader-info b{color:var(--txt)}
+  .res{display:flex;flex-direction:column;align-items:center;min-width:62px;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,.02)}
+  .res .rl{font-size:10px;color:var(--dim);letter-spacing:1px}
+  .res .rv{font-size:15px;font-weight:700;color:var(--txt)}
+  .res .rv.neg{color:var(--red2)}
+  .res .rc{font-size:10px}
+  .res .rc.up{color:var(--green)}
+  .res .rc.dn{color:var(--red2)}
+  .sep{color:var(--border);margin:0 2px}
+
+  /* 主区域 */
+  .main-area{flex:1;display:flex;overflow:hidden}
+  .left-col{flex:1;display:flex;flex-direction:column;overflow:hidden}
+  .tab-bar{
+    display:flex;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;
+  }
+  .tab{
+    padding:10px 18px;color:var(--dim);font-size:13px;border-bottom:2px solid transparent;white-space:nowrap;
+  }
+  .tab:hover{color:var(--txt)}
+  .tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+  .tab-content{flex:1;overflow-y:auto;padding:16px}
+  .right-col{
+    width:300px;background:var(--panel);border-left:1px solid var(--border);
+    overflow-y:auto;padding:14px;flex-shrink:0;
+  }
+  .right-col h4{color:var(--gold);font-size:13px;margin-bottom:8px;letter-spacing:1px;border-bottom:1px solid var(--border);padding-bottom:6px}
+  .stat-row{display:flex;justify-content:space-between;font-size:12px;padding:4px 0;color:#b8bdc8}
+  .stat-row b{color:var(--txt)}
+  .rel-row{display:flex;justify-content:space-between;font-size:12px;padding:3px 0}
+  .rel-row .rn{color:#b8bdc8}
+  .rel-row .rv{font-weight:600}
+  .rel-row .rv.good{color:var(--green)}
+  .rel-row .rv.bad{color:var(--red2)}
+  .rel-row .rv.neu{color:var(--dim)}
+  .mini-bar{height:4px;background:var(--border);border-radius:2px;margin:2px 0 8px;overflow:hidden}
+  .mini-bar>div{height:100%;background:var(--gold)}
+
+  /* 卡片 */
+  .card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+  .build-card{
+    background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:14px;cursor:pointer;transition:all .15s;
+  }
+  .build-card:hover{border-color:var(--gold);transform:translateY(-2px)}
+  .build-card.civ{border-left:3px solid var(--blue2)}
+  .build-card.mil{border-left:3px solid var(--red2)}
+  .build-card .bn{font-size:14px;font-weight:600;margin-bottom:4px}
+  .build-card .bd{font-size:11px;color:var(--dim);margin-bottom:8px;line-height:1.5}
+  .build-card .bc{font-size:12px;color:var(--gold)}
+  .build-card .be{font-size:11px;color:#9fb4cc;margin-top:6px;line-height:1.5}
+  .build-card.disabled{opacity:.45;cursor:not-allowed}
+  .build-card.disabled:hover{transform:none;border-color:var(--border)}
+
+  .owned-list{margin-top:16px}
+  .owned-item{display:flex;justify-content:space-between;padding:6px 10px;background:var(--panel);border-radius:4px;margin-bottom:6px;font-size:12px}
+  .owned-item .cnt{color:var(--gold);font-weight:700}
+
+  /* 事件弹窗 */
+  #eventModal{
+    position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;
+    align-items:center;justify-content:center;z-index:100;padding:20px;
+  }
+  .event-box{
+    background:var(--panel);border:1px solid var(--gold);border-radius:8px;
+    max-width:600px;width:100%;max-height:90vh;overflow-y:auto;padding:24px;
+    box-shadow:0 0 60px rgba(201,162,74,.15);
+  }
+  .event-box .ey{color:var(--gold);font-size:12px;letter-spacing:2px;margin-bottom:6px}
+  .event-box h2{color:var(--txt);font-size:22px;margin-bottom:14px;line-height:1.4}
+  .event-box .eb{color:#c0c5d0;line-height:2;margin-bottom:18px;text-indent:2em;font-size:14px}
+  .event-choices{display:flex;flex-direction:column;gap:8px}
+  .choice-btn{
+    background:var(--panel2);border:1px solid var(--border);border-radius:5px;
+    padding:12px 14px;text-align:left;transition:all .15s;
+  }
+  .choice-btn:hover{border-color:var(--gold);background:#2a2f3d}
+  .choice-btn .ct{font-size:14px;color:var(--txt);font-weight:600;margin-bottom:3px}
+  .choice-btn .ce{font-size:11px;color:#9fb4cc;line-height:1.5}
+
+  /* 结局界面 */
+  #endScreen{
+    position:fixed;inset:0;background:var(--bg);display:none;
+    flex-direction:column;align-items:center;justify-content:center;padding:40px;overflow-y:auto;
+  }
+  .end-box{max-width:640px;text-align:center}
+  .end-box .ety{color:var(--gold);letter-spacing:6px;font-size:13px;margin-bottom:12px}
+  .end-box h1{font-size:36px;margin-bottom:20px;font-weight:700}
+  .end-box .edesc{color:#b8bdc8;line-height:2;margin-bottom:24px;text-indent:2em}
+  .end-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:24px}
+  .end-stat{background:var(--panel);padding:10px;border-radius:6px;border:1px solid var(--border)}
+  .end-stat .sl{font-size:11px;color:var(--dim)}
+  .end-stat .sv{font-size:18px;font-weight:700;color:var(--gold)}
+
+  /* 底栏 */
+  .bottombar{
+    background:linear-gradient(180deg,#101218,#0a0b0e);border-top:1px solid var(--border);
+    padding:8px 12px;display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap;
+  }
+  .turn-info{font-size:13px;color:var(--txt)}
+  .turn-info b{color:var(--gold)}
+  .turn-progress{flex:1;min-width:120px;height:6px;background:var(--border);border-radius:3px;overflow:hidden;min-width:150px}
+  .turn-progress>div{height:100%;background:linear-gradient(90deg,var(--red2),var(--gold));transition:width .3s}
+  .next-btn{
+    background:linear-gradient(180deg,var(--red2),var(--red));color:#fff;
+    padding:8px 22px;border-radius:5px;font-size:14px;font-weight:600;
+  }
+  .next-btn:hover{filter:brightness(1.15)}
+  .next-btn:disabled{opacity:.5;cursor:not-allowed}
+  .util-btn{background:var(--panel);border:1px solid var(--border);padding:8px 12px;border-radius:5px;font-size:12px}
+  .util-btn:hover{border-color:var(--gold)}
+
+  /* 时间线 */
+  .timeline{display:flex;align-items:center;gap:2px;flex-wrap:wrap;margin-top:8px}
+  .tl-node{display:flex;flex-direction:column;align-items:center;min-width:60px}
+  .tl-dot{width:8px;height:8px;border-radius:50%;background:var(--border)}
+  .tl-dot.done{background:var(--gold)}
+  .tl-dot.now{background:var(--red2);box-shadow:0 0 8px var(--red2)}
+  .tl-yr{font-size:9px;color:var(--dim);margin-top:2px}
+  .tl-ev{font-size:9px;color:#7a8090;margin-top:1px;text-align:center}
+
+  /* 概览面板 */
+  .ov-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:18px}
+  .ov-card{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:14px;text-align:center}
+  .ov-card .ol{font-size:11px;color:var(--dim);margin-bottom:6px}
+  .ov-card .ov{font-size:24px;font-weight:700;color:var(--gold)}
+  .ov-card .ou{font-size:11px;color:var(--dim)}
+  .narrative{background:var(--panel);border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:6px;padding:14px;margin-bottom:18px}
+  .narrative h4{color:var(--gold);margin-bottom:8px;font-size:14px}
+  .narrative p{color:#b8bdc8;line-height:1.9;font-size:13px}
+  .news-list{margin-top:10px}
+  .news-item{font-size:12px;color:#9aa0ad;padding:5px 0;border-bottom:1px dashed var(--border)}
+  .news-item .nt{color:var(--gold);margin-right:6px}
+
+  /* 科技/国策卡片 */
+  .tech-card{
+    background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:14px;margin-bottom:10px;
+  }
+  .tech-card.unlocked{border-color:var(--green);opacity:.7}
+  .tech-card .th{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+  .tech-card .tn{font-size:14px;font-weight:600}
+  .tech-card .tc{font-size:11px;color:var(--gold)}
+  .tech-card .td{font-size:12px;color:var(--dim);line-height:1.6;margin-bottom:8px}
+  .tech-card .te{font-size:11px;color:#9fb4cc;margin-bottom:8px}
+  .research-btn{background:var(--blue);color:#fff;padding:6px 16px;border-radius:4px;font-size:12px}
+  .research-btn:hover{background:var(--blue2)}
+  .research-btn:disabled{opacity:.4;cursor:not-allowed}
+  .route-badge{display:inline-block;font-size:10px;padding:2px 6px;border-radius:3px;margin-left:6px}
+
+  /* 响应式 */
+  @media(max-width:820px){
+    .right-col{display:none}
+    .res{min-width:50px}
+    .res .rv{font-size:13px}
+    .start-title h1{font-size:28px}
+    .opt-grid{grid-template-columns:1fr}
+  }
+  .center{text-align:center}
+  .muted{color:var(--dim)}
+  .danger{color:var(--red2)}
+  .success{color:var(--green)}
+  .warn{color:var(--warn)}
+</style>
+</head>
+<body>
+
+<!-- ====== 开始界面 ====== -->
+<div id="startScreen">
+  <div class="start-wrap">
+    <div class="start-title">
+      <div class="era">TNO · 1962 — 2000</div>
+      <h1>新秩序的黄昏</h1>
+      <div class="sub">大日耳曼国 · 策略推演</div>
+    </div>
+
+    <div class="prologue">
+      <h3>序章 · 诸神黄昏之前</h3>
+      <p>时为西历1962年，欧罗巴正在长筒靴下苟且偷生着。</p>
+      <p>第二次世界大战彻底焚毁了旧世界。一个新秩序从废墟中爬出——在它的暴政之下，数千万人归于黄土；在它的威胁面前，自由的最后灯火行将熄灭。从大西洋到乌拉尔，万字旗的阴影笼罩着整个欧陆，而旗帜之下，是一具早已腐烂却仍在走动的尸体。</p>
+
+      <h4>一、千年之尸</h4>
+      <p>大日耳曼国于对法兰西、苏联与不列颠的惊人胜利中崛起，本应千年不朽。然而残酷、傲慢、腐败的领导层，将帝国推到了崩溃的边缘。五十年代那场灾难性的经济崩溃后，德国经济彻底冻结——德国人不再工作，庞大的奴隶阶层承担起几乎整个工业的运转。黑市失控，青年反叛，街道上回荡着"废除奴隶制"的呼喊。</p>
+      <p>西俄战争虽以惨胜告终，却让经济雪上加霜，并催生了希姆莱的勃艮第与他的疯狂。亚特兰特罗帕计划耗尽国库，逼走地中海盟友。军队臃肿低效，党卫军秘密建军火库，与国防军分庭抗礼。这一切，悉数印在希特勒那行将就木的视线之中。而在他的身下，无数秃鹫盯着他，目露凶光。</p>
+
+      <h4>二、四头秃鹫</h4>
+      <p>1962年1月，德国宣称赢得太空竞赛，宇航员首次踏上月球，举国欢腾。然而庆典之上，一名伪装成日本刺客的勃艮第特工潜入元首办公室，向希特勒连开两枪。一周后，弥留的元首全国讲话，钦定四人角逐大位：</p>
+      <ul>
+        <li>▸ <b>阿尔伯特·施佩尔</b>——改革派。试图自由化纳粹党、挽救公司体制。学生与他同行，但他力量最弱，唯有外国支持与经济改革能为他开路。</li>
+        <li>▸ <b>马丁·鲍曼</b>——保守派。维护纳粹党的核心，巩固党内忠诚。势力最盛，是旧体制最忠实的守墓人。</li>
+        <li>▸ <b>赫尔曼·戈林</b>——军国派。视战争为经济繁荣之本，"战争计划"激进扩张。空军与他同在，但军事失败将瓦解内部稳定。</li>
+        <li>▸ <b>莱因哈德·海德里希</b>——"布拉格屠夫"。党卫军在他旗下，但他不过是希姆莱的提线木偶，黑暗中的黑暗。</li>
+      </ul>
+      <p>1963年10月，让世界遭受三十年苦难的恶魔，像一个普通老人一般死去。葬礼过后，陆军与空军蠢蠢欲动，民众站队，国会束手无策。全面内战，一触即发。</p>
+
+      <h4>三、中立的孤岛</h4>
+      <p>当炮火在首都上空呼啸时，国防军元帅汉斯·斯派达尔率日耳曼尼亚卫戍部队控制了首都核心区域，宣布建立"日耳曼尼亚保护区"。"沙漠之狐"隆美尔站在他一边。四位候选人对斯派达尔怒目而视，但无人敢进攻日耳曼尼亚——那意味着摧毁帝国的象征，失去继承的合法性。与此同时，迈尔·霍费尔率一部分海军东赴克里米亚，自立为王。</p>
+
+      <h4>四、勃艮第之影</h4>
+      <p>希姆莱得到了勃艮第——一个让他和党卫军在不触动日耳曼尼亚政府的情况下，实践疯狂计划的立足之地。他的真正计划只有他自己知晓：用全球核战争"净化"非雅利安人的末日方案，而他自认不够纯正，将与勃艮第一同在核焰中焚毁。恶魔领主坐在密不透风的黑色壁垒内，计划着毁灭全世界。</p>
+
+      <h4>五、三极世界</h4>
+      <p>东亚细亚在共荣圈的大旗下得以统一，却向日本俯首称臣。海军与陆军严重对立，且双方都握有核武器。最后的美利坚，在珍珠港的核子火焰洗礼下依然屹立，OFN由美国牵头联合残余民主国家。地中海诸国建立脆弱的三头同盟，成为冷战第四股力量。而俄罗斯——破碎的巨熊倒下了，数十个军阀邦国在废墟上厮杀，要将这个国家按自己的愿景重新统一。</p>
+
+      <h4>六、你的抉择</h4>
+      <p>您将扮演帝国权力核心的一员。从希特勒之死到新世纪的钟声，在长达三十八年的岁月中，为德国的未来做出抉择——在内战的废墟上重建，在四派继承人的厮杀中选边，在斯派达尔的中立与霍费尔的割据间周旋，在希姆莱的核阴影下求生，于三极冷战中纵横捭阖。设计军工业以威慑敌国，发展民工业以延续经济，直至2000年的终局。</p>
+      <p class="epi">千年帝国没有活到一千年。但它会活成一个怎样的自己——这，由你决定。</p>
+    </div>
+
+    <div class="section-label">选择难度</div>
+    <div class="opt-grid" id="diffOpts">
+      <button class="opt-btn sel" data-diff="easy"><div class="ot">简单</div><div class="od">帝国根基尚稳，适合熟悉剧情</div></button>
+      <button class="opt-btn" data-diff="normal"><div class="ot">普通</div><div class="od">标准难度，帝国面临真实挑战</div></button>
+      <button class="opt-btn" data-diff="hard"><div class="ot">困难</div><div class="od">帝国摇摇欲坠，步步惊心</div></button>
+      <button class="opt-btn locked" data-diff="hell" id="hellBtn"><div class="ot">地狱 🔒</div><div class="od">帝国末日已至。通关困难解锁</div></button>
+    </div>
+
+    <div class="section-label">选择游戏模式</div>
+    <div class="opt-grid" id="modeOpts">
+      <button class="opt-btn sel" data-mode="history"><div class="ot">📜 历史模式</div><div class="od">严格遵循TNO主线时间线，原汁原味</div></button>
+      <button class="opt-btn" data-mode="sandbox"><div class="ot">🌍 沙盒模式</div><div class="od">世界自由发展，AI加速演变</div></button>
+      <button class="opt-btn" data-mode="chaos"><div class="ot">🎲 混乱模式</div><div class="od">随机领导人、随机事件权重，不可预测</div></button>
+    </div>
+
+    <div class="start-actions">
+      <button class="btn-primary" id="startBtn">进入帝国总理府 ▸</button>
+      <button class="btn-ghost" id="tutorialBtn">阅读教程</button>
+      <button class="btn-ghost" id="continueBtn" style="display:none">继续上次游戏</button>
+    </div>
+
+    <div class="disclaimer">
+      ⚠ 本游戏基于TNO（The New Order: Last Days of Europe）架空世界观创作，纯属虚构历史推演。<br>
+      游戏内容旨在探讨极权主义的后果与历史教训，绝无任何政治立场或意识形态宣传意图。<br>
+      游戏中所有人物、事件、国家均为虚构，与现实无关。
+    </div>
+  </div>
+</div>
+
+<!-- 教程弹窗 -->
+<div id="tutorialModal" style="position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center;z-index:90;padding:20px">
+  <div class="event-box" style="max-width:620px">
+    <div class="ey">游戏教程</div>
+    <h2>如何推演帝国的命运</h2>
+    <div class="eb" style="text-indent:0">
+      <p style="margin-bottom:10px"><b>一、目标：</b>你扮演大日耳曼国权力核心的一员，从1962年到2000年，为帝国做出抉择。根据路线与决策，将走向<b>15种结局</b>之一。</p>
+      <p style="margin-bottom:10px"><b>二、八项资源（顶栏）：</b>资金、人力、稳定、威慑、军力、核武、研发、民心。括号内为每季度变化。稳定低于0帝国崩溃；威慑过低会被入侵。</p>
+      <p style="margin-bottom:10px"><b>三、工业建设：</b>民工业（蓝）产出资金/人力/稳定/研发；军工业（红）产出威慑/军力/核武。前期平衡发展，中期重军工业，后期视路线决定。</p>
+      <p style="margin-bottom:10px"><b>四、国策与科技：</b>国策通过立法影响走向（如奴隶制存废）；科技消耗研发点数解锁永久增益。</p>
+      <p style="margin-bottom:10px"><b>五、事件：</b>剧情事件自动弹窗，每个选择有不同后果。1963选继任者决定四条路线，1989核危机决定存亡。</p>
+      <p style="margin-bottom:10px"><b>六、操作：</b>电脑按空格推进季度；手机点底部"下一季度"。事件弹窗必须选择才能继续。</p>
+      <p><b>七、结局：</b>2000年根据稳定、威慑、核弹、路线综合判定。从"帝国之春"到"诸神黄昏"，命运在你手中。</p>
+    </div>
+    <div class="event-choices">
+      <button class="choice-btn" onclick="document.getElementById('tutorialModal').style.display='none'"><div class="ct">明白了</div></button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 游戏主界面 ====== -->
+<div id="gameScreen">
+  <div class="topbar" id="topbar"></div>
+  <div class="main-area">
+    <div class="left-col">
+      <div class="tab-bar" id="tabBar"></div>
+      <div class="tab-content" id="tabContent"></div>
+    </div>
+    <div class="right-col" id="rightCol"></div>
+  </div>
+  <div class="bottombar" id="bottombar"></div>
+</div>
+
+<!-- 事件弹窗 -->
+<div id="eventModal">
+  <div class="event-box" id="eventBox"></div>
+</div>
+
+<!-- 结局界面 -->
+<div id="endScreen">
+  <div class="end-box" id="endBox"></div>
+</div>
+
+<script>
+/* ============================================================
+   新秩序的黄昏 · TNO 策略推演
+   游戏引擎与数据
+   ============================================================ */
+
+// ====== 难度与模式配置 ======
+const DIFF_CONFIG = {
+  easy:   { name:'简单', mul:{money:1.3,stab:1.3,det:1.2}, startBonus:50, desc:'帝国根基尚稳' },
+  normal: { name:'普通', mul:{money:1.0,stab:1.0,det:1.0}, startBonus:0,  desc:'标准难度' },
+  hard:   { name:'困难', mul:{money:0.8,stab:0.8,det:0.85},startBonus:-30,desc:'帝国摇摇欲坠' },
+  hell:   { name:'地狱', mul:{money:0.6,stab:0.6,det:0.7}, startBonus:-60,desc:'帝国末日已至' }
+};
+const MODE_CONFIG = {
+  history:{ name:'历史模式', desc:'严格遵循TNO主线' },
+  sandbox:{ name:'沙盒模式', desc:'世界自由发展' },
+  chaos:  { name:'混乱模式', desc:'随机不可预测' }
+};
+
+// ====== 建筑定义 ======
+const BUILDINGS = {
+  // 民工业
+  factory:    { name:'消费品工厂', type:'civ', cost:60,  upkeep:2, desc:'生产消费品，产出资金', effects:{money:8} },
+  housing:    { name:'工人住宅区', type:'civ', cost:50,  upkeep:1, desc:'安置劳动力，产出人力与稳定', effects:{manpower:3,stab:1} },
+  rdc:        { name:'研发中心',   type:'civ', cost:80,  upkeep:3, desc:'科学研究，产出研发点数', effects:{research:4} },
+  infra:      { name:'基础设施',   type:'civ', cost:45,  upkeep:1, desc:'降低所有建造成本5%', effects:{buildDiscount:0.05} },
+  farm:       { name:'农业庄园',   type:'civ', cost:40,  upkeep:1, desc:'产出食物与人力', effects:{manpower:2,stab:1} },
+  // 军工业
+  arsenal:    { name:'兵工厂',     type:'mil', cost:70,  upkeep:3, desc:'生产武器装备，提升军力', effects:{military:6} },
+  nuke:       { name:'核武器设施', type:'mil', cost:120, upkeep:5, desc:'制造核武器与核威慑', effects:{nukes:0.2,nucDet:4} },
+  wunder:     { name:'奇迹武器实验室', type:'mil', cost:100, upkeep:4, desc:'高级研发，产出大量研发点数', effects:{research:7,det:2} },
+  airdef:     { name:'国土防空网', type:'mil', cost:85,  upkeep:3, desc:'防御与威慑', effects:{det:5,military:2} }
+};
+
+// ====== 科技定义 ======
+const TECHS = [
+  { id:'nuclear',  name:'核聚变研究',   cost:80,  desc:'解锁高级核能，核威慑+10',   route:null,     apply:s=>{s.nucDet+=10;} },
+  { id:'computer', name:'计算机革命',   cost:70,  desc:'研发效率提升，每季研发+3',  route:null,     apply:s=>{s.researchBonus+=3;} },
+  { id:'rocket',   name:'火箭技术',     cost:60,  desc:'导弹技术，军力+10威慑+5',   route:null,     apply:s=>{s.military+=10;s.det+=5;} },
+  { id:'econ',     name:'经济改革理论', cost:50,  desc:'资金产出+20%',              route:null,     apply:s=>{s.moneyBonus+=0.2;} },
+  { id:'slave',    name:'劳动力解放',   cost:90,  desc:'废除奴隶制，稳定+15但军力-10',route:'speer', apply:s=>{s.stab+=15;s.military-=10;s.slavery=false;} },
+  { id:'ss_reform',name:'党卫军整编',   cost:70,  desc:'整合党卫军，军力+15',        route:'heydrich',apply:s=>{s.military+=15;s.det+=5;} },
+  { id:'air',      name:'空军现代化',   cost:65,  desc:'戈林路线，军力+12',          route:'goring',  apply:s=>{s.military+=12;} },
+  { id:'navy',     name:'海军扩张',     cost:75,  desc:'鲍曼路线，威慑+8',           route:'bormann', apply:s=>{s.det+=8;} },
+];
+
+// ====== 国策定义 ======
+const POLICIES = [
+  { id:'slave_keep',   name:'维持奴隶制',   desc:'维持现状，经济稳定但民心-3/季', route:null,     effect:s=>({money:4,manpower:1,support:-3}) },
+  { id:'slave_reform', name:'渐进改革',     desc:'逐步解放，民心+2但资金-3/季',   route:'speer',  effect:s=>({support:2,money:-3}) },
+  { id:'slave_abolish',name:'彻底废除',     desc:'立即废除，民心+8但军力-8',      route:'speer',  effect:s=>({support:8,military:-8}) },
+  { id:'war_plan',     name:'战争计划',     desc:'戈林路线，军力+5但稳定-2/季',  route:'goring',  effect:s=>({military:5,stab:-2}) },
+  { id:'navy_build',   name:'海军扩建',     desc:'鲍曼路线，威慑+4资金-3/季',    route:'bormann', effect:s=>({det:4,money:-3}) },
+  { id:'ss_purge',     name:'清洗党卫军',   desc:'海德里希路线，军力+6稳定-3',   route:'heydrich',effect:s=>({military:6,stab:-3}) },
+  { id:'market',       name:'市场经济',     desc:'开放市场，资金+6但稳定-1',     route:null,     effect:s=>({money:6,stab:-1}) },
+  { id:'autarky',      name:'自给自足',     desc:'封闭经济，稳定+2但研发-2',     route:null,     effect:s=>({stab:2,research:-2}) },
+];
+
+// ====== 列强 ======
+const POWERS = [
+  { id:'usa',    name:'美国',   flag:'🇺🇸' },
+  { id:'japan',  name:'日本',   flag:'🇯🇵' },
+  { id:'italy',  name:'意大利', flag:'🇮🇹' },
+  { id:'burgundy',name:'勃艮第',flag:'🖤' },
+  { id:'russia', name:'俄罗斯', flag:'🐻' },
+  { id:'ibearia',name:'伊比利亚',flag:'🇪🇸' },
+];
+
+// ====== 事件系统 ======
+const EVENTS = [
+  {
+    id:'hitler_death', year:1963, quarter:1, title:'元首之死',
+    year_text:'1963年10月',
+    body:'让整个世界遭受三十年苦难的恶魔，像一个普通老人一般死去了。葬礼过后，陆军与空军蠢蠢欲动，民众站队，国会束手无策。四位候选人等候你的抉择——帝国权力核心的你，将押注于谁？',
+    choices:[
+      { text:'支持阿尔伯特·施佩尔（改革派）', desc:'自由化纳粹党，经济改革开路。力量最弱但前景未定。', route:'speer',
+        effect:s=>{ s.route='speer'; s.leader='阿尔伯特·施佩尔'; s.stab-=5; s.support+=10; s.money-=20; } },
+      { text:'支持马丁·鲍曼（保守派）', desc:'势力最盛，旧体制守墓人。稳定但僵化。', route:'bormann',
+        effect:s=>{ s.route='bormann'; s.leader='马丁·鲍曼'; s.stab+=5; s.det+=5; } },
+      { text:'支持赫尔曼·戈林（军国派）', desc:'战争计划，空军支持。军事冒险。', route:'goring',
+        effect:s=>{ s.route='goring'; s.leader='赫尔曼·戈林'; s.military+=15; s.stab-=8; } },
+      { text:'支持莱因哈德·海德里希（党卫军）', desc:'布拉格屠夫，希姆莱的木偶。黑暗之路。', route:'heydrich',
+        effect:s=>{ s.route='heydrich'; s.leader='莱因哈德·海德里希'; s.military+=10; s.stab-=15; s.det+=8; } },
+    ]
+  },
+  {
+    id:'civil_war', year:1963, quarter:4, title:'德国内战',
+    year_text:'1963年冬 — 1965年',
+    body:'继承危机演变为全面内战。四位候选人的军队在帝国各地交火。斯派达尔的保护区保持中立，霍费尔割据克里米亚。战火吞噬着曾经的千年帝国。你必须在内战中做出关键抉择。',
+    choices:[
+      { text:'速战速决，集中兵力', desc:'快速结束内战，军力消耗大但稳定恢复快', effect:s=>{ s.military-=25; s.stab+=10; s.money-=30; } },
+      { text:'稳扎稳打，消耗敌方', desc:'缓慢推进，损失小但持续时间长', effect:s=>{ s.military-=15; s.stab+=5; s.money-=50; } },
+      { text:'寻求外国调停', desc:'OFN介入，威慑下降但减少损失', effect:s=>{ s.military-=10; s.det-=10; s.stab+=3; s.relations.usa+=10; } },
+    ]
+  },
+  {
+    id:'burgundy_nuke', year:1965, quarter:2, title:'勃艮第的阴影',
+    year_text:'1965年',
+    body:'内战接近尾声之时，情报显示希姆莱的勃艮第可能已从帝国核武库中窃取了核武器。党卫军的黑暗堡垒中，一场末日阴谋正在酝酿。你如何应对？',
+    choices:[
+      { text:'突袭勃艮第核设施', desc:'军事冒险，成功则核威胁解除，失败则灾难', effect:s=>{ if(Math.random()>0.5){ s.nukes+=1; s.det+=10; s.news.push('突袭成功！夺回核武器'); } else { s.stab-=15; s.news.push('突袭失败，帝国颜面尽失'); } } },
+      { text:'外交斡旋，秘密谈判', desc:'缓慢但安全，与希姆莱达成默契', effect:s=>{ s.det-=5; s.stab+=5; s.relations.burgundy+=10; } },
+      { text:'忽视威胁，专注内政', desc:'不作为，但隐患犹存', effect:s=>{ s.nucDet-=10; } },
+    ]
+  },
+  {
+    id:'russia_warlords', year:1968, quarter:1, title:'俄罗斯的混战',
+    year_text:'1968年',
+    body:'东方边境之外，数十个军阀邦国在西伯利亚厮杀。从托木斯克到马加丹，每一方都试图统一俄罗斯。混乱的东方既是威胁也是机遇——一个分裂的俄罗斯对帝国更安全。',
+    choices:[
+      { text:'支持某一方军阀', desc:'扶植代理人，未来可能反噬', effect:s=>{ s.money-=20; s.relations.russia+=15; s.det+=5; } },
+      { text:'维持分裂，平衡各方', desc:'让俄罗斯继续内耗', effect:s=>{ s.money-=10; s.det+=3; } },
+      { text:'趁乱东进扩张', desc:'军事冒险，戈林路线增益', route_bonus:'goring', effect:s=>{ s.military-=15; s.det+=15; if(s.route==='goring'){s.stab+=5;} else {s.stab-=5;} } },
+    ]
+  },
+  {
+    id:'russia_unified', year:1972, quarter:3, title:'俄罗斯的统一',
+    year_text:'1972年',
+    body:'一个军阀终于统一了俄罗斯。无论是西俄革命阵线的红色旗帜，还是某个军阀的独裁，统一的俄罗斯重新成为帝国的威胁。东方边境再次紧张起来。',
+    choices:[
+      { text:'加强东方边境防御', desc:'消耗资源但提升威慑', effect:s=>{ s.money-=40; s.det+=15; s.military+=5; } },
+      { text:'与统一俄罗斯和解', desc:'外交缓和，但失去威慑', effect:s=>{ s.relations.russia+=25; s.det-=5; } },
+      { text:'发动先发制人打击', desc:'戈林路线，高风险高回报', route_bonus:'goring', effect:s=>{ s.military-=30; if(Math.random()>0.6){s.det+=20;s.stab+=5;}else{s.stab-=15;} } },
+    ]
+  },
+  {
+    id:'cold_war_peak', year:1975, quarter:2, title:'冷战高潮',
+    year_text:'1975年',
+    body:'三极冷战达到高潮。德国、日本、美国三大阵营在全球角力。代理人战争遍布非洲、亚洲、南美。核武器数量激增，末日时钟指向午夜前三分钟。',
+    choices:[
+      { text:'军备竞赛，扩充核武', desc:'核弹+2，但资金大量消耗', effect:s=>{ s.nukes+=2; s.nucDet+=15; s.money-=60; s.stab-=3; } },
+      { text:'推动缓和政策', desc:'与美日和解，节省资源', route_bonus:'speer', effect:s=>{ s.relations.usa+=15; s.relations.japan+=15; s.money+=20; if(s.route!=='speer'){s.det-=5;} } },
+      { text:'拉拢地中海三国', desc:'强化三头同盟关系', effect:s=>{ s.relations.italy+=15; s.relations.ibearia+=15; s.det+=5; } },
+    ]
+  },
+  {
+    id:'west_russia_war', year:1981, quarter:1, title:'西俄战争',
+    year_text:'1981年',
+    body:'统一的俄罗斯发动西俄战争，试图收复失地。东方边境战火重燃，这是帝国自内战以来最大的军事考验。东方总督辖区告急！',
+    choices:[
+      { text:'全力反击', desc:'倾国之力，军力大消耗', effect:s=>{ s.military-=40; s.money-=80; if(s.military>30){s.det+=20;s.stab+=10;s.news.push('西俄战争胜利！');}else{s.stab-=20;s.news.push('西俄战争惨胜');} } },
+      { text:'战略撤退，固守要塞', desc:'收缩防线，减少损失', effect:s=>{ s.military-=20; s.det-=10; s.stab-=5; } },
+      { text:'核威慑，迫使停火', desc:'使用核威慑，可能引发危机', effect:s=>{ s.nucDet-=15; if(Math.random()>0.7){s.stab-=25;s.news.push('核威慑失败！');}else{s.stab+=5;s.news.push('核威慑成功，停火');} } },
+    ]
+  },
+  {
+    id:'nuclear_crisis', year:1989, quarter:3, title:'午夜差一分钟',
+    year_text:'1989年',
+    body:'勃艮第的末日计划被曝光。希姆莱下令党卫军向全球发射核武器，"净化"非雅利安人。末日时钟指向午夜差一分钟。这是人类历史上最危险的时刻——你的抉择将决定世界存亡。',
+    choices:[
+      { text:'全力阻止希姆莱', desc:'军事行动，风险极高', effect:s=>{ s.military-=30; if(Math.random()>0.4){ s.nukes-=1; s.stab+=20; s.news.push('阻止成功！世界得救'); } else { s.stab-=40; s.nucDet-=30; s.news.push('阻止失败，核武器发射'); s.badEnding=true; } } },
+      { text:'核报复，全面核战争', desc:'以核制核，两败俱伤', effect:s=>{ s.nukes-=3; s.stab-=50; s.nucDet-=40; s.badEnding=true; s.news.push('全面核战争！'); } },
+      { text:'外交斡旋，争取时间', desc:'施佩尔路线增益', route_bonus:'speer', effect:s=>{ if(s.route==='speer'){s.stab+=15;s.news.push('外交成功！');}else{s.stab-=20;s.nucDet-=15;} } },
+      { text:'与希姆莱同流合污', desc:'海德里希路线，黑暗结局', route_bonus:'heydrich', effect:s=>{ if(s.route==='heydrich'){s.darkEnding=true;}else{s.stab-=30;} } },
+    ]
+  },
+  {
+    id:'twilight_era', year:1996, quarter:2, title:'黄昏时代',
+    year_text:'1996年',
+    body:'二十世纪即将结束。帝国（如果还存在的话）已是风雨飘摇的黄昏之躯。旧秩序的裂缝遍布各处，新世纪钟声即将敲响，而帝国的命运悬于一线。',
+    choices:[
+      { text:'推进改革，迎接新世纪', desc:'施佩尔路线增益', route_bonus:'speer', effect:s=>{ if(s.route==='speer'){s.stab+=15;s.support+=10;}else{s.stab+=5;} } },
+      { text:'巩固传统，坚守旧制', desc:'鲍曼路线增益', route_bonus:'bormann', effect:s=>{ if(s.route==='bormann'){s.det+=10;s.stab+=5;}else{s.stab-=3;} } },
+      { text:'最后的军事冒险', desc:'戈林路线，孤注一掷', route_bonus:'goring', effect:s=>{ if(s.route==='goring'){s.military+=20;s.det+=10;}else{s.military-=10;s.stab-=10;} } },
+    ]
+  },
+  // 沙盒/随机事件
+  {
+    id:'student_protest', year:0, title:'学生抗议',
+    body:'柏林大学的学生走上街头，要求民主改革与言论自由。他们的呼声在帝国上空回荡。',
+    choices:[
+      { text:'镇压抗议', desc:'稳定短期恢复，民心下降', effect:s=>{ s.stab+=3; s.support-=8; } },
+      { text:'与学生对话', desc:'施佩尔路线增益', route_bonus:'speer', effect:s=>{ if(s.route==='speer'){s.support+=10;s.stab+=3;}else{s.support+=3;s.stab-=2;} } },
+      { text:'无视', desc:'不作为', effect:s=>{ s.support-=3; } },
+    ]
+  },
+  {
+    id:'economic_crash', year:0, title:'经济危机',
+    body:'黑市失控，马克贬值，帝国经济再次陷入危机。民众恐慌囤积物资。',
+    choices:[
+      { text:'紧急救济', desc:'消耗资金稳定局势', effect:s=>{ s.money-=40; s.stab+=5; } },
+      { text:'市场改革', desc:'长期收益但短期动荡', effect:s=>{ s.stab-=5; s.moneyBonus+=0.1; } },
+      { text:'军事管制', desc:'军管经济', effect:s=>{ s.military-=5; s.stab+=3; s.support-=5; } },
+    ]
+  },
+  {
+    id:'moon_race', year:0, title:'太空竞赛',
+    body:'美日德三方太空竞赛白热化。投资太空技术可提升国际威望与研发。',
+    choices:[
+      { text:'大力投资太空', desc:'消耗资金，研发+威望', effect:s=>{ s.money-=50; s.research+=15; s.det+=5; } },
+      { text:'合作研究', desc:'与某方合作', effect:s=>{ s.money-=20; s.research+=8; } },
+      { text:'放弃太空', desc:'节省资源', effect:s=>{ s.support-=3; } },
+    ]
+  },
+];
+
+// ====== 结局定义 ======
+const ENDINGS = [
+  { id:'spring',      name:'帝国之春',   type:'good', desc:'民主化改革成功，帝国在和平中转型。自由的曙光照亮了欧罗巴，旧秩序的阴霾终于散去。人民获得了尊严，国家获得了新生。这是最好的结局——千年帝国以一种最不"帝国"的方式，迎来了自己的春天。' },
+  { id:'reich1000',   name:'千年帝国',   type:'neutral', desc:'鲍曼的保守路线胜利。帝国维持着僵硬的旧秩序，腐朽却稳固。万字旗继续飘扬，但旗帜之下是停滞的灵魂。千年帝国活到了它想要的样子——一个没有灵魂的千年。' },
+  { id:'war_glory',   name:'战争荣光',   type:'neutral', desc:'戈林的军国路线将帝国拖入无休止的战争。军事胜利换来短暂荣光，但经济与人心早已枯竭。帝国在炮火中前行，却不知通往何方。' },
+  { id:'darkness',    name:'黑暗降临',   type:'bad', desc:'海德里希的党卫军路线胜利。帝国沦为希姆莱的提线木偶，黑暗笼罩欧陆。集中营的烟囱日夜不息，自由彻底死去。这是最黑暗的结局。' },
+  { id:'ragnarok',    name:'诸神黄昏',   type:'bad', desc:'核子末日降临。蘑菇云在全球绽放，文明在核焰中焚毁。千年帝国没有活到一千年——它，连同整个世界，一同化为灰烬。' },
+  { id:'collapse',    name:'帝国崩溃',   type:'bad', desc:'稳定度跌破零点，帝国从内部瓦解。军阀割据，四分五裂，欧陆重回战国时代。千年帝国死得无声无息。' },
+  { id:'invasion',    name:'外敌入侵',   type:'bad', desc:'威慑过低，敌国联军入侵。万字旗在炮火中倒下，帝国被瓜分殆尽。' },
+  { id:'reform_slow', name:'迟来的改革', type:'neutral', desc:'改革步履蹒跚，帝国勉强维持。新世纪钟声敲响时，它既未崩溃也未重生，只是在历史的夹缝中苟延残喘。' },
+  { id:'cold_peace',  name:'冷和平',     type:'neutral', desc:'三极冷战持续，帝国在核阴影下维持着脆弱的平衡。没有战争，也没有和平，只有永恒的紧张。' },
+  { id:'compromise',  name:'妥协之路',   type:'neutral', desc:'各方妥协，帝国走向中间路线。既不辉煌也不黑暗，只是平庸地存在着。' },
+];
+
+// ====== 游戏状态 ======
+let G = null; // 全局游戏状态
+
+function initState(diff, mode){
+  const dc = DIFF_CONFIG[diff];
+  const startMoney = 200 + dc.startBonus;
+  return {
+    diff, mode,
+    year:1962, quarter:1, turn:1, totalTurns:152, // 1962Q1 - 2000Q4
+    leader:'阿道夫·希特勒', leaderTitle:'元首（垂死）',
+    route:null, // speer/bormann/goring/heydrich
+    // 资源
+    money:startMoney, manpower:30, stab:45, det:60,
+    military:80, nucDet:30, nukes:2, research:20, support:40,
+    // 增益
+    moneyBonus:0, researchBonus:0, slavery:true,
+    // 建筑 {id:count}
+    buildings:{ factory:2, housing:1, arsenal:1 },
+    // 已研科技
+    techs:[],
+    // 已颁布国策
+    activePolicies:[],
+    // 列强关系
+    relations:{ usa:-20, japan:-10, italy:5, burgundy:-30, russia:-40, ibearia:0 },
+    // 触发过的事件
+    triggeredEvents:[],
+    // 新闻
+    news:[],
+    // 标记
+    badEnding:false, darkEnding:false, gameOver:false,
+  };
+}
+
+// ====== 工具函数 ======
+function $(id){ return document.getElementById(id); }
+function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
+function fmt(n){ return Math.round(n); }
+function resChangeText(v){ if(v>0) return `<span class="rc up">+${fmt(v)}</span>`; if(v<0) return `<span class="rc dn">${fmt(v)}</span>`; return `<span class="rc">±0</span>`; }
+
+// ====== 资源计算 ======
+function calcResourceChanges(){
+  const c = { money:0, manpower:0, stab:0, det:0, military:0, nucDet:0, nukes:0, research:0, support:0 };
+  // 基础消耗
+  c.money -= 6; // 维护
+  c.manpower += 2;
+  c.det -= 2;
+  c.nucDet -= 1;
+  c.research += 1;
+  // 建筑产出
+  for(const id in G.buildings){
+    const cnt = G.buildings[id];
+    if(!cnt) continue;
+    const b = BUILDINGS[id];
+    const m = DIFF_CONFIG[G.diff].mul;
+    for(const k in b.effects){
+      let v = b.effects[k] * cnt;
+      if(k==='money') v *= m.money;
+      if(k==='stab') v *= m.stab;
+      if(k==='det') v *= m.det;
+      if(k==='buildDiscount') continue;
+      c[k] = (c[k]||0) + v;
+    }
+  }
+  // 科技加成
+  if(G.researchBonus) c.research += G.researchBonus;
+  if(G.moneyBonus) c.money *= (1+G.moneyBonus);
+  // 国策效果
+  for(const pid of G.activePolicies){
+    const p = POLICIES.find(x=>x.id===pid);
+    if(p){
+      const e = p.effect(G);
+      for(const k in e) c[k] = (c[k]||0) + e[k];
+    }
+  }
+  // 路线基础效果
+  if(G.route==='speer') c.support += 1;
+  if(G.route==='goring') c.military += 1;
+  if(G.route==='bormann') c.stab += 1;
+  if(G.route==='heydrich') c.det += 1;
+  // 稳定影响民心
+  if(G.stab < 20) c.support -= 2;
+  return c;
+}
+
+// ====== 渲染顶栏 ======
+function renderTopbar(){
+  const c = calcResourceChanges();
+  const dc = DIFF_CONFIG[G.diff];
+  const mc = MODE_CONFIG[G.mode];
+  const res = [
+    ['💰','资金',G.money,c.money],
+    ['👥','人力',G.manpower,c.manpower],
+    ['⚖','稳定',G.stab,c.stab],
+    ['🗡','威慑',G.det,c.det],
+    ['⚔','军力',G.military,c.military],
+    ['☢','核慑',G.nucDet,c.nucDet],
+    ['💥','核弹',fmt(G.nukes),fmt(c.nukes)],
+    ['🔬','研发',G.research,c.research],
+    ['❤','民心',G.support,c.support],
+  ];
+  const resHtml = res.map(r=>{
+    const v = typeof r[2]==='number'?fmt(r[2]):r[2];
+    const ch = typeof r[3]==='number'?resChangeText(r[3]):r[3];
+    return `<div class="res"><div class="rl">${r[0]} ${r[1]}</div><div class="rv ${r[2]<0?'neg':''}">${v}</div>${ch}</div>`;
+  }).join('<span class="sep">│</span>');
+  $('topbar').innerHTML = `
+    <span class="flag">🦅</span>
+    <span class="nat-name">大日耳曼国</span>
+    <span class="diff-tag">${dc.name}</span>
+    <span class="mode-tag">${mc.name}</span>
+    <span class="leader-info">元首：<b>${G.leader}</b></span>
+    ${resHtml}
+  `;
+}
+
+// ====== 渲染右侧面板 ======
+function renderRightCol(){
+  const c = calcResourceChanges();
+  const relRows = POWERS.map(p=>{
+    const v = G.relations[p.id]||0;
+    const cls = v>10?'good':v<-20?'bad':'neu';
+    const tag = v>30?'友好':v>10?'温和':v>-10?'中立':v>-30?'冷淡':'敌对';
+    return `<div class="rel-row"><span class="rn">${p.flag} ${p.name}</span><span class="rv ${cls}">${v>0?'+':''}${v} (${tag})</span></div>`;
+  }).join('');
+  const civBld = Object.entries(G.buildings).filter(([id])=>BUILDINGS[id].type==='civ').reduce((s,[,c])=>s+c,0);
+  const milBld = Object.entries(G.buildings).filter(([id])=>BUILDINGS[id].type==='mil').reduce((s,[,c])=>s+c,0);
+  const newsHtml = G.news.slice(-5).reverse().map(n=>`<div class="news-item"><span class="nt">${n.t||''}</span>${n.e||n}</div>`).join('') || '<div class="muted center" style="font-size:11px">暂无新闻</div>';
+  $('rightCol').innerHTML = `
+    <h4>帝国状态</h4>
+    <div class="stat-row"><span>稳定度</span><b>${fmt(G.stab)}/100</b></div>
+    <div class="mini-bar"><div style="width:${clamp(G.stab,0,100)}%;background:${G.stab<20?'var(--red2)':'var(--gold)'}"></div></div>
+    <div class="stat-row"><span>综合威慑</span><b>${fmt(G.det)}/150</b></div>
+    <div class="mini-bar"><div style="width:${clamp(G.det/150*100,0,100)}%"></div></div>
+    <div class="stat-row"><span>核威慑</span><b>${fmt(G.nucDet)}/150</b></div>
+    <div class="mini-bar"><div style="width:${clamp(G.nucDet/150*100,0,100)}%;background:var(--red2)"></div></div>
+    <div class="stat-row"><span>民心</span><b>${fmt(G.support)}/100</b></div>
+    <div class="mini-bar"><div style="width:${clamp(G.support,0,100)}%;background:var(--blue2)"></div></div>
+    <h4 style="margin-top:14px">列强关系</h4>
+    ${relRows}
+    <h4 style="margin-top:14px">工业</h4>
+    <div class="stat-row"><span>民用建筑</span><b>${civBld}</b></div>
+    <div class="stat-row"><span>军用建筑</span><b>${milBld}</b></div>
+    <div class="stat-row"><span>已研科技</span><b>${G.techs.length}</b></div>
+    <div class="stat-row"><span>研发点数</span><b>${fmt(G.research)}</b></div>
+    <h4 style="margin-top:14px">近期要事</h4>
+    <div class="news-list">${newsHtml}</div>
+  `;
+}
+
+// ====== 标签页 ======
+const TABS = [
+  { id:'overview', name:'概览' },
+  { id:'world', name:'世界' },
+  { id:'industry', name:'工业' },
+  { id:'policy', name:'国策' },
+  { id:'tech', name:'科技' },
+];
+let activeTab = 'overview';
+
+function renderTabs(){
+  $('tabBar').innerHTML = TABS.map(t=>`<button class="tab ${t.id===activeTab?'active':''}" onclick="switchTab('${t.id}')">${t.name}</button>`).join('');
+}
+
+function switchTab(id){ activeTab=id; renderTabs(); renderTabContent(); }
+
+function renderTabContent(){
+  const c = $('tabContent');
+  if(activeTab==='overview') c.innerHTML = renderOverview();
+  else if(activeTab==='world') c.innerHTML = renderWorld();
+  else if(activeTab==='industry') c.innerHTML = renderIndustry();
+  else if(activeTab==='policy') c.innerHTML = renderPolicy();
+  else if(activeTab==='tech') c.innerHTML = renderTech();
+}
+
+// ====== 概览 ======
+function renderOverview(){
+  const c = calcResourceChanges();
+  const routeName = G.route ? ({speer:'施佩尔（改革派）',bormann:'鲍曼（保守派）',goring:'戈林（军国派）',heydrich:'海德里希（党卫军）'}[G.route]) : '未定';
+  const narrative = getNarrative();
+  const tlHtml = renderTimeline();
+  const newsHtml = G.news.slice(-8).reverse().map(n=>`<div class="news-item"><span class="nt">${n.t||''}</span>${n.e||n}</div>`).join('') || '<div class="muted">尚无重大事件</div>';
+  return `
+    <div class="narrative">
+      <h4>帝国纪要 · ${G.year}年第${G.quarter}季度</h4>
+      <p>${narrative}</p>
+    </div>
+    <div class="ov-grid">
+      <div class="ov-card"><div class="ol">稳定度</div><div class="ov">${fmt(G.stab)}</div><div class="ou">/ 100 ${G.stab<20?'⚠ 危险':''}</div></div>
+      <div class="ov-card"><div class="ol">综合威慑</div><div class="ov">${fmt(G.det)}</div><div class="ou">/ 150 ${G.det<30?'⚠ 过低':''}</div></div>
+      <div class="ov-card"><div class="ol">核武库</div><div class="ov">${fmt(G.nukes)}</div><div class="ou">枚核弹</div></div>
+      <div class="ov-card"><div class="ol">财政</div><div class="ov">${fmt(G.money)}</div><div class="ou">百万元 | 每季 ${c.money>=0?'+':''}${fmt(c.money)}</div></div>
+      <div class="ov-card"><div class="ol">当前路线</div><div class="ov" style="font-size:14px">${routeName}</div><div class="ou">${G.leader}</div></div>
+      <div class="ov-card"><div class="ol">民心</div><div class="ov">${fmt(G.support)}</div><div class="ou">/ 100</div></div>
+    </div>
+    <div class="narrative">
+      <h4>历史进程</h4>
+      ${tlHtml}
+    </div>
+    <div class="narrative">
+      <h4>新闻动态</h4>
+      <div class="news-list">${newsHtml}</div>
+    </div>
+  `;
+}
+
+function getNarrative(){
+  const y = G.year;
+  if(y===1962) return '帝国刚刚登月，但元首遇刺，权力真空已然形成。四位继承者虎视眈眈，街头的年轻人开始反抗。';
+  if(y===1963) return '元首驾崩。继承危机爆发，内战一触即发。帝国站在十字路口。';
+  if(y>=1964 && y<=1965) return '内战仍在继续。帝国的土地在炮火中颤抖，斯派达尔的保护区成了乱世孤岛。';
+  if(y>=1966 && y<=1967) return '内战结束，但帝国满目疮痍。重建之路漫长而艰难。';
+  if(y>=1968 && y<=1971) return '东方边境之外，俄罗斯的军阀们在西伯利亚厮杀。统一的威胁尚未到来。';
+  if(y>=1972 && y<=1974) return '俄罗斯统一了。东方的巨熊重新站起，再次成为帝国的威胁。';
+  if(y>=1975 && y<=1980) return '三极冷战达到高潮。核武器数量激增，末日时钟滴答作响。';
+  if(y>=1981 && y<=1985) return '西俄战争。统一的俄罗斯发动反攻，东方边境战火重燃。';
+  if(y>=1986 && y<=1988) return '战后恢复期。帝国伤痕累累，但仍在维持。核阴影始终笼罩。';
+  if(y>=1989 && y<=1990) return '午夜差一分钟。勃艮第的末日阴谋浮出水面，人类站在毁灭的边缘。';
+  if(y>=1991 && y<=1995) return '核危机之后的世界。帝国风雨飘摇，旧秩序的裂缝遍布各处。';
+  if(y>=1996) return '黄昏时代。新世纪钟声即将敲响，千年帝国的命运悬于一线。';
+  return '帝国在历史中前行。';
+}
+
+function renderTimeline(){
+  const nodes = [
+    {y:1962,e:'登月'},{y:1963,e:'元首之死'},{y:1965,e:'内战结束'},
+    {y:1968,e:'军阀混战'},{y:1972,e:'俄罗斯统一'},{y:1975,e:'冷战高潮'},
+    {y:1981,e:'西俄战争'},{y:1989,e:'核危机'},{y:1996,e:'黄昏'},{y:2000,e:'终局'}
+  ];
+  return `<div class="timeline">${nodes.map(n=>{
+    const done = G.year>n.y || (G.year===n.y);
+    const now = G.year===n.y;
+    return `<div class="tl-node"><div class="tl-dot ${now?'now':done?'done':''}"></div><div class="tl-yr">${n.y}</div><div class="tl-ev">${n.e}</div></div>`;
+  }).join('')}</div>`;
+}
+
+// ====== 世界 ======
+function renderWorld(){
+  const rows = POWERS.map(p=>{
+    const v = G.relations[p.id]||0;
+    const tag = v>30?'友好':v>10?'温和':v>-10?'中立':v>-30?'冷淡':'敌对';
+    const cls = v>10?'good':v<-20?'bad':'neu';
+    const desc = getPowerDesc(p.id);
+    return `<div class="build-card" style="cursor:default">
+      <div class="bn">${p.flag} ${p.name} <span class="rv ${cls}" style="float:right">${v>0?'+':''}${v} (${tag})</span></div>
+      <div class="bd">${desc}</div>
+    </div>`;
+  }).join('');
+  return `<div class="card-grid">${rows}</div>
+    <div class="narrative" style="margin-top:18px">
+      <h4>世界格局</h4>
+      <p>1962年的世界被三大阵营瓜分：大日耳曼国主导的轴心（已名存实亡）、大日本帝国的共荣圈、美利坚的OFN。地中海三头同盟是第四股力量，而破碎的俄罗斯仍是未知数。勃艮第则是悬在世界头顶的核子利剑。</p>
+    </div>`;
+}
+function getPowerDesc(id){
+  const d = {
+    usa:'自由国家组织（OFN）的领袖。珍珠港核袭后仍屹立，肯尼迪政府试图重振国旗。民权运动撕裂着社会。',
+    japan:'大东亚共荣圈的主宰。海军与陆军对立，双方都握有核武器。满洲、朝鲜、中国的反抗火种从未熄灭。',
+    italy:'三头同盟成员。齐亚诺领导的社会共和国固守法西斯遗产，抵抗民主运动。',
+    burgundy:'希姆莱的黑暗堡垒。党卫军在此实践疯狂计划——用全球核战争"净化"非雅利安人。最危险的存在。',
+    russia:'破碎的巨熊。数十个军阀邦国厮杀，试图重新统一。统一的俄罗斯将重新成为威胁。',
+    ibearia:'伊比利亚联邦。弗朗哥与萨拉查的脆弱联盟，在繁荣与内爆中浮沉。',
+  };
+  return d[id]||'';
+}
+
+// ====== 工业 ======
+function renderIndustry(){
+  const discount = Object.entries(G.buildings).filter(([id])=>BUILDINGS[id].type==='civ' && id==='infra').reduce((s,[,c])=>s+c*0.05,0);
+  const owned = Object.entries(G.buildings).filter(([,c])=>c>0).map(([id,c])=>`<div class="owned-item"><span>${BUILDINGS[id].name}</span><span class="cnt">×${c}</span></div>`).join('');
+  const civHtml = Object.entries(BUILDINGS).filter(([,b])=>b.type==='civ').map(([id,b])=>{
+    const cost = Math.round(b.cost*(1-discount));
+    const can = G.money>=cost && G.manpower>=1;
+    const eff = Object.entries(b.effects).filter(([k])=>k!=='buildDiscount').map(([k,v])=>`+${v} ${k}`).join(', ');
+    return `<div class="build-card civ ${can?'':'disabled'}" onclick="${can?`build('${id}')`:''}">
+      <div class="bn">${b.name}</div>
+      <div class="bd">${b.desc}</div>
+      <div class="bc">💰 ${cost} · 👥 1 · 维护 ${b.upkeep}/季</div>
+      <div class="be">产出：${eff}</div>
+    </div>`;
+  }).join('');
+  const milHtml = Object.entries(BUILDINGS).filter(([,b])=>b.type==='mil').map(([id,b])=>{
+    const cost = Math.round(b.cost*(1-discount));
+    const can = G.money>=cost && G.manpower>=1;
+    const eff = Object.entries(b.effects).map(([k,v])=>`+${v} ${k}`).join(', ');
+    return `<div class="build-card mil ${can?'':'disabled'}" onclick="${can?`build('${id}')`:''}">
+      <div class="bn">${b.name}</div>
+      <div class="bd">${b.desc}</div>
+      <div class="bc">💰 ${cost} · 👥 1 · 维护 ${b.upkeep}/季</div>
+      <div class="be">产出：${eff}</div>
+    </div>`;
+  }).join('');
+  return `
+    <div class="narrative">
+      <h4>工业建设</h4>
+      <p>民工业（蓝）产出资金、人力、稳定、研发，保障经济；军工业（红）产出威慑、军力、核武，震慑敌国。前期平衡发展，中期重军工业，后期视路线决定。基础设施每座降低5%建造成本（当前 -${Math.round(discount*100)}%）。</p>
+    </div>
+    <h4 style="color:var(--blue2);margin-bottom:10px">民工业</h4>
+    <div class="card-grid">${civHtml}</div>
+    <h4 style="color:var(--red2);margin:18px 0 10px">军工业</h4>
+    <div class="card-grid">${milHtml}</div>
+    <div class="owned-list">
+      <h4 style="color:var(--gold);margin-bottom:8px">已建建筑</h4>
+      ${owned||'<div class="muted">暂无</div>'}
+    </div>
+  `;
+}
+
+function build(id){
+  const b = BUILDINGS[id];
+  const discount = Object.entries(G.buildings).filter(([bid])=>BUILDINGS[bid].type==='civ' && bid==='infra').reduce((s,[,c])=>s+c*0.05,0);
+  const cost = Math.round(b.cost*(1-discount));
+  if(G.money<cost || G.manpower<1) return;
+  G.money -= cost; G.manpower -= 1;
+  G.buildings[id] = (G.buildings[id]||0)+1;
+  G.news.push({t:`${G.year}Q${G.quarter}`,e:`建造完成：${b.name}`});
+  renderAll();
+}
+
+// ====== 国策 ======
+function renderPolicy(){
+  const html = POLICIES.map(p=>{
+    const active = G.activePolicies.includes(p.id);
+    const routeOk = !p.route || G.route===p.route;
+    const canEnact = !active && routeOk && G.stab>=10;
+    const badge = p.route?`<span class="route-badge" style="background:var(--ss);color:#fff">${({speer:'施',bormann:'鲍',goring:'戈',heydrich:'海'})[p.route]}</span>`:'';
+    return `<div class="tech-card ${active?'unlocked':''}">
+      <div class="th"><span class="tn">${p.name} ${badge}</span>${active?'<span class="success">已颁布</span>':(canEnact?`<button class="research-btn" onclick="enactPolicy('${p.id}')">颁布</button>`:'<span class="muted">条件不足</span>')}</div>
+      <div class="td">${p.desc}</div>
+      <div class="te">${routeOk?'':'⚠ 需要对应路线'}</div>
+    </div>`;
+  }).join('');
+  return `<div class="narrative"><h4>国策政策</h4><p>通过立法影响帝国走向。不同路线解锁不同政策。每项政策每季度产生持续效果。同时颁布过多政策可能引发动荡。</p></div>${html}`;
+}
+function enactPolicy(id){
+  const p = POLICIES.find(x=>x.id===id);
+  if(!p) return;
+  if(G.activePolicies.includes(p)) return;
+  if(p.route && G.route!==p.route) return;
+  G.activePolicies.push(id);
+  G.news.push({t:`${G.year}Q${G.quarter}`,e:`颁布国策：${p.name}`});
+  renderAll();
+}
+
+// ====== 科技 ======
+function renderTech(){
+  const html = TECHS.map(t=>{
+    const done = G.techs.includes(t.id);
+    const routeOk = !t.route || G.route===t.route;
+    const can = !done && routeOk && G.research>=t.cost;
+    const badge = t.route?`<span class="route-badge" style="background:var(--ss);color:#fff">${({speer:'施',bormann:'鲍',goring:'戈',heydrich:'海'})[t.route]}</span>`:'';
+    return `<div class="tech-card ${done?'unlocked':''}">
+      <div class="th"><span class="tn">${t.name} ${badge}</span>${done?'<span class="success">已研究</span>':(can?`<button class="research-btn" onclick="researchTech('${t.id}')">研究 (🔬${t.cost})</button>`:'<span class="muted">'+(routeOk?`研发不足`:'需对应路线')+'</span>')}</div>
+      <div class="td">${t.desc}</div>
+      <div class="te">${routeOk?'':'⚠ 需要对应路线'}</div>
+    </div>`;
+  }).join('');
+  return `<div class="narrative"><h4>科技研发</h4><p>消耗研发点数解锁永久增益。当前研发点数：${fmt(G.research)}</p></div>${html}`;
+}
+function researchTech(id){
+  const t = TECHS.find(x=>x.id===id);
+  if(!t || G.techs.includes(id)) return;
+  if(t.route && G.route!==t.route) return;
+  if(G.research<t.cost) return;
+  G.research -= t.cost;
+  G.techs.push(id);
+  t.apply(G);
+  G.news.push({t:`${G.year}Q${G.quarter}`,e:`研究完成：${t.name}`});
+  renderAll();
+}
+
+// ====== 底栏 ======
+function renderBottombar(){
+  const pct = (G.turn/G.totalTurns*100).toFixed(1);
+  $('bottombar').innerHTML = `
+    <span class="turn-info"><b>${G.year}</b>年第<b>${G.quarter}</b>季度</span>
+    <span class="turn-info muted">回合 ${G.turn}/${G.totalTurns}</span>
+    <div class="turn-progress"><div style="width:${pct}%"></div></div>
+    <button class="next-btn" id="nextBtn" onclick="nextTurn()">推进至下一季度 ▸</button>
+    <button class="util-btn" onclick="saveGame()">保存</button>
+    <button class="util-btn" onclick="loadGame()">读取</button>
+    <button class="util-btn" onclick="if(confirm('确定重启？未保存进度将丢失')){localStorage.removeItem('tno_save');location.reload()}">重启</button>
+  `;
+}
+
+// ====== 渲染全部 ======
+function renderAll(){
+  renderTopbar();
+  renderTabContent();
+  renderRightCol();
+  renderBottombar();
+}
+
+// ====== 推进季度 ======
+function nextTurn(){
+  if(G.gameOver) return;
+  // 检查事件
+  const ev = checkEvent();
+  if(ev){ showEvent(ev); return; }
+  advanceTurn();
+}
+
+function advanceTurn(){
+  const c = calcResourceChanges();
+  G.money += c.money;
+  G.manpower += c.manpower;
+  G.stab = clamp(G.stab + c.stab, -50, 100);
+  G.det += c.det;
+  G.military += c.military;
+  G.nucDet += c.nucDet;
+  G.nukes += c.nukes;
+  G.research += c.research;
+  G.support = clamp(G.support + c.support, 0, 100);
+  // 季度推进
+  G.quarter++;
+  if(G.quarter>4){ G.quarter=1; G.year++; }
+  G.turn++;
+  // 检查失败条件
+  if(G.stab<=0){ endGame('collapse'); return; }
+  if(G.det<=0){ endGame('invasion'); return; }
+  if(G.badEnding){ endGame('ragnarok'); return; }
+  if(G.darkEnding){ endGame('darkness'); return; }
+  if(G.turn>G.totalTurns){ endGame(determineEnding()); return; }
+  // 随机沙盒事件
+  if((G.mode==='sandbox'||G.mode==='chaos') && Math.random()<0.15){
+    const rand = EVENTS.filter(e=>e.year===0);
+    if(rand.length){
+      const ev = rand[Math.floor(Math.random()*rand.length)];
+      showEvent(ev);
+      return;
+    }
+  }
+  renderAll();
+}
+
+function checkEvent(){
+  // 历史事件按时间触发
+  for(const ev of EVENTS){
+    if(ev.year===0) continue; // 随机事件单独处理
+    if(G.triggeredEvents.includes(ev.id)) continue;
+    let match=false;
+    if(ev.quarter){
+      match = (G.year===ev.year && G.quarter===ev.quarter);
+    } else {
+      match = (G.year===ev.year);
+    }
+    // 混乱模式可能提前/延后
+    if(G.mode==='chaos' && ev.year && G.year===ev.year && !ev.quarter){
+      match = (G.quarter>=Math.ceil(Math.random()*4));
+    }
+    if(match){
+      G.triggeredEvents.push(ev.id);
+      return ev;
+    }
+  }
+  return null;
+}
+
+// ====== 显示事件 ======
+let currentEvent = null;
+function showEvent(ev){
+  currentEvent = ev;
+  const choicesHtml = ev.choices.map((c,i)=>{
+    const routeTag = c.route?`<span class="route-badge" style="background:var(--ss);color:#fff">${({speer:'施',bormann:'鲍',goring:'戈',heydrich:'海'})[c.route]}</span>`:'';
+    return `<button class="choice-btn" onclick="chooseEvent(${i})">
+      <div class="ct">${c.text} ${routeTag}</div>
+      <div class="ce">${c.desc||''}</div>
+    </button>`;
+  }).join('');
+  $('eventBox').innerHTML = `
+    <div class="ey">${ev.year_text||ev.year+'年'}</div>
+    <h2>${ev.title}</h2>
+    <div class="eb">${ev.body}</div>
+    <div class="event-choices">${choicesHtml}</div>
+  `;
+  $('eventModal').style.display='flex';
+}
+
+function chooseEvent(i){
+  const c = currentEvent.choices[i];
+  if(c.effect) c.effect(G);
+  if(c.route) G.route = c.route;
+  G.news.push({t:`${G.year}Q${G.quarter}`,e:currentEvent.title+': '+c.text.substring(0,12)});
+  $('eventModal').style.display='none';
+  currentEvent = null;
+  // 事件后推进
+  advanceTurn();
+  renderAll();
+}
+
+// ====== 结局判定 ======
+function determineEnding(){
+  // 根据路线与资源判定
+  if(G.route==='speer'){
+    if(G.stab>50 && G.support>50) return 'spring';
+    return 'reform_slow';
+  }
+  if(G.route==='bormann'){
+    if(G.stab>40) return 'reich1000';
+    return 'cold_peace';
+  }
+  if(G.route==='goring'){
+    if(G.military>80) return 'war_glory';
+    return 'cold_peace';
+  }
+  if(G.route==='heydrich'){
+    return 'darkness';
+  }
+  // 无路线
+  if(G.stab>40 && G.det>50) return 'compromise';
+  return 'cold_peace';
+}
+
+function endGame(endingId){
+  G.gameOver = true;
+  const e = ENDINGS.find(x=>x.id===endingId)||ENDINGS.find(x=>x.id==='cold_peace');
+  const colorMap = {good:'var(--green)',neutral:'var(--gold)',bad:'var(--red2)'};
+  $('endBox').innerHTML = `
+    <div class="ety" style="color:${colorMap[e.type]}">${G.year}年 · 终局</div>
+    <h1 style="color:${colorMap[e.type]}">${e.name}</h1>
+    <div class="edesc">${e.desc}</div>
+    <div class="end-stats">
+      <div class="end-stat"><div class="sl">稳定度</div><div class="sv">${fmt(G.stab)}</div></div>
+      <div class="end-stat"><div class="sl">综合威慑</div><div class="sv">${fmt(G.det)}</div></div>
+      <div class="end-stat"><div class="sl">核弹</div><div class="sv">${fmt(G.nukes)}</div></div>
+      <div class="end-stat"><div class="sl">民心</div><div class="sv">${fmt(G.support)}</div></div>
+    </div>
+    <div style="color:var(--dim);margin-bottom:20px;font-size:13px">路线：${G.route||'未定'} · 回合：${G.turn}</div>
+    <button class="btn-primary" onclick="localStorage.removeItem('tno_save');location.reload()">重新开始</button>
+  `;
+  $('gameScreen').style.display='none';
+  $('endScreen').style.display='flex';
+  localStorage.removeItem('tno_save');
+  // 解锁地狱难度
+  if(endingId!=='ragnarok' && endingId!=='collapse' && endingId!=='invasion' && G.diff==='hard'){
+    localStorage.setItem('tno_hell_unlocked','1');
+  }
+}
+
+// ====== 存档 ======
+function saveGame(){
+  localStorage.setItem('tno_save', JSON.stringify(G));
+  G.news.push({t:`${G.year}Q${G.quarter}`,e:'游戏已保存'});
+  renderAll();
+}
+function loadGame(){
+  const s = localStorage.getItem('tno_save');
+  if(!s){ alert('没有存档'); return; }
+  G = JSON.parse(s);
+  $('startScreen').style.display='none';
+  $('endScreen').style.display='none';
+  $('gameScreen').style.display='flex';
+  renderAll();
+}
+
+// ====== 开始界面交互 ======
+let selDiff='easy', selMode='history';
+document.querySelectorAll('#diffOpts .opt-btn').forEach(b=>{
+  b.onclick=()=>{
+    if(b.classList.contains('locked')){
+      if(localStorage.getItem('tno_hell_unlocked')==='1'){
+        b.classList.remove('locked');
+        b.querySelector('.ot').innerHTML='地狱';
+      } else { alert('通关困难难度解锁'); return; }
+    }
+    document.querySelectorAll('#diffOpts .opt-btn').forEach(x=>x.classList.remove('sel'));
+    b.classList.add('sel');
+    selDiff=b.dataset.diff;
+  };
+});
+document.querySelectorAll('#modeOpts .opt-btn').forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll('#modeOpts .opt-btn').forEach(x=>x.classList.remove('sel'));
+    b.classList.add('sel');
+    selMode=b.dataset.mode;
+  };
+});
+
+$('startBtn').onclick=()=>{
+  G = initState(selDiff, selMode);
+  $('startScreen').style.display='none';
+  $('gameScreen').style.display='flex';
+  renderAll();
+  // 开场事件
+  setTimeout(()=>{
+    showEvent({
+      id:'opening', year:1962, year_text:'1962年1月',
+      title:'帝国登月 · 元首遇刺',
+      body:'1962年1月，德国宣称赢得太空竞赛，宇航员首次踏上月球，举国欢腾。然而庆典之上，一名伪装成日本刺客的勃艮第特工潜入元首办公室，向希特勒连开两枪。元首昏迷不醒，帝国陷入恐慌。权力真空已然形成——四位秃鹫开始盘旋。',
+      choices:[
+        { text:'静观其变，稳固自身权力', desc:'等待元首最终命运的裁决', effect:s=>{ s.stab-=5; s.news.push({t:'1962Q1',e:'元首遇刺，帝国震动'}); } },
+      ]
+    });
+  }, 300);
+};
+$('tutorialBtn').onclick=()=>{ $('tutorialModal').style.display='flex'; };
+
+// 检查存档
+if(localStorage.getItem('tno_save')){
+  $('continueBtn').style.display='inline-block';
+  $('continueBtn').onclick=loadGame;
+}
+// 检查地狱解锁
+if(localStorage.getItem('tno_hell_unlocked')==='1'){
+  const hb=$('hellBtn');
+  hb.classList.remove('locked');
+  hb.querySelector('.ot').innerHTML='地狱';
+}
+
+// 键盘快捷键
+document.addEventListener('keydown',e=>{
+  if(e.code==='Space' && G && !G.gameOver && $('eventModal').style.display!=='flex'){
+    e.preventDefault();
+    nextTurn();
+  }
+});
+</script>
+</body>
+</html>
