@@ -348,9 +348,10 @@ button{font-family:inherit;cursor:pointer;color:var(--txt);border:none;backgroun
 
 /* ====== 竖屏提示 + 横屏强制旋转 ====== */
 #rotateHint{
-  position:fixed;inset:0;z-index:9999;background:#0a0b0e;color:#c9a24a;
+  position:fixed;inset:0;z-index:9999;background:rgba(10,11,14,0.96);color:#c9a24a;
   display:none;flex-direction:column;align-items:center;justify-content:center;gap:20px;
   font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+  pointer-events:auto;
 }
 #rotateHint .rh-icon{font-size:80px;animation:rh 1.2s ease-in-out infinite alternate;}
 @keyframes rh {
@@ -359,11 +360,8 @@ button{font-family:inherit;cursor:pointer;color:var(--txt);border:none;backgroun
 }
 #rotateHint .rh-title{font-size:22px;font-weight:bold;letter-spacing:2px;}
 #rotateHint .rh-sub{font-size:13px;color:#808794;}
-
-@media (max-aspect-ratio: 4/3) and (orientation: portrait){
-  #rotateHint{display:flex;}
-  #rotateHint ~ *{display:none!important;}
-}
+#rotateHint .rh-btn{margin-top:10px;padding:10px 24px;background:var(--gold);color:#1a1d23;
+  border:none;border-radius:6px;font-weight:bold;font-size:15px;letter-spacing:2px;cursor:pointer;}
 
 /* 极窄屏设备（无法横屏）：强制旋转整个body 90度 */
 @media (max-width: 540px) and (orientation: portrait){
@@ -872,7 +870,7 @@ function startGame(){
   for(const cc in G.cs){
     const c=G.cs[cc];
     // 找到首都省份
-    const cap = COUNTRIES[cc].cap || Object.values(PROVINCES).find(p=>p.cc===cc)?.id;
+    const cap = COUNTRIES[cc].cap || (function(m){return m?m.id:undefined;})(Object.values(PROVINCES).find(p=>p.cc===cc));
     if(!cap) continue;
     const n={
       ger:14,usa:12,jpn:10,rus:6,itl:6,bug:4,spa:5,fra:5,eng:3,pro:3,swd:3,
@@ -921,7 +919,7 @@ function setSpeed(s){
   for(let i=0;i<=5;i++){
     const b=$(`spd_${i}`);if(!b)continue;
     b.classList.toggle('sel',i===s);
-    if(i===0)$('pauseBtn')?.classList.toggle('sel',s===0);
+    if(i===0)($('pauseBtn')?$('pauseBtn').classList.toggle('sel',s===0):void 0);
   }
   renderDate();
 }
@@ -1051,7 +1049,7 @@ function tickArmies(){
             // 占领
             map.cc=a.cc;
             a.prov=target;
-            if(a.cc===G.me || owner===G.me) newsFlash(`${cflag(a.cc)} ${cname(a.cc)} 占领 ${PROVINCES[target]?.name}`);
+            if(a.cc===G.me || owner===G.me) newsFlash(`${cflag(a.cc)} ${cname(a.cc)} 占领 ${(PROVINCES[target]?PROVINCES[target].name:'')}`);
           } else {
             // 守方胜
             const losses=Math.ceil(a.divisions*0.25);
@@ -1132,7 +1130,7 @@ function isFriendly(a,b){
   const ca=G.cs[a],cb=G.cs[b];
   if(ca.puppetOf===b||cb.puppetOf===a)return true;
   if(ca.faction&&ca.faction===cb.faction)return true;
-  return (G.rel[a]?.[b]||0)>50;
+  return ((G.rel[a]&&G.rel[a][b]!=null?G.rel[a][b]:0)||0)>50;
 }
 function adjacentProvinceOf(cc,pid){
   // 找距离最近的同cc且非pid的省份（模拟"相邻省份"）
@@ -1249,7 +1247,7 @@ function renderLeftbar(){
   document.querySelectorAll('.mn-btn').forEach(b=>{
     const txt=b.textContent.trim();
     const panelMap={'🗺':'none','🏛':'politics','🎯':'focus','⚔':'army','🏭':'production','🔬':'tech','🤝':'diplomacy'};
-    const icon=b.querySelector('.mni')?.textContent;
+    const icon=(b.querySelector('.mni')?b.querySelector('.mni').textContent:'');
     b.classList.toggle('sel',panelMap[icon]===G.showPanel);
   });
 }
@@ -1259,7 +1257,7 @@ function toggleRightbar(){
   rb.classList.toggle('show');
 }
 // 点击地图区域时关闭右侧面板（手机端）
-function closeRightbar(){$('rightbar')?.classList.remove('show');}
+function closeRightbar(){($('rightbar')?$('rightbar').classList.remove('show'):void 0);}
 
 function switchPanel(panel,btn){
   G.showPanel=panel;
@@ -1376,7 +1374,7 @@ function renderArmy(){
 }
 function raiseArmy(){
   const c=G.cs[G.me];if(c.manpower<50)return alert('人力不足');
-  const cap=COUNTRIES[G.me].cap||Object.values(PROVINCES).find(p=>p.cc===G.me)?.id;
+  const cap=COUNTRIES[G.me].cap||(function(m){return m?m.id:undefined;})(Object.values(PROVINCES).find(p=>p.cc===G.me));
   c.manpower-=50;c.armySize+=1;
   const a=mkArmy(G.me,cap,`${cflag(G.me)}第${c.armySize}集团军`,12,100,25);
   G.armies.push(a);recalcProvArmies();renderUI();renderMap();
@@ -1402,7 +1400,7 @@ function renderProduction(){
   ];
   const totalMil=c.mil;
   let used=0;
-  for(const l of lines) used+=c.prod[l.k]?.factories||0;
+  for(const l of lines) used+=(c.prod[l.k]?c.prod[l.k].factories:0)||0;
   const free=Math.max(0,totalMil-used);
   let html=`<div class="row"><span>可用军工厂</span><b style="color:var(--all)">${free}</b> / ${totalMil}</div>
     <div class="row"><span>民用工厂</span><b>${c.civ}</b>（用于贸易和基建）</div>
@@ -1935,8 +1933,21 @@ function endGame(kind,desc){
   $('endScreen').style.display='flex';
 }
 
-// ====== 启动 ======
-initStart();
+// ====== 启动（移动端安全包装：等待DOM+地图数据就绪） ======
+;(function boot(){
+  function _ready(){
+    // 检查地图数据是否加载（兼容移动端慢加载）
+    if(typeof COUNTRIES==='undefined' || typeof PROVINCES==='undefined' || typeof REGION_RAW_SVG==='undefined'){
+      setTimeout(_ready, 50); return;
+    }
+    try{ initStart(); }catch(e){ console.error('initStart failed:',e); }
+  }
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded', _ready);
+  }else{
+    _ready();
+  }
+})();
 
 // ===== Region selector event binding (deferred to DOM ready) =====
 function _bindRegionToolbar(){
