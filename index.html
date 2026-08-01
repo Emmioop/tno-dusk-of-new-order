@@ -26,15 +26,15 @@ button{font-family:inherit;cursor:pointer;color:var(--txt);border:none;backgroun
 ::-webkit-scrollbar-thumb{background:#3a4050;border-radius:4px}
 
 /* ====== 开始界面 ====== */
-#startScreen{position:fixed;inset:0;overflow:hidden;background:
+#startScreen{position:fixed;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;background:
   radial-gradient(ellipse at 30% 20%,#1a2030 0%,var(--bg) 60%),linear-gradient(180deg,#08090b,#0c0d10);
   display:flex;flex-direction:column;z-index:500}
-#startMap{flex:1 1 300px;min-height:260px;width:100%;overflow:hidden;position:relative}
+#startMap{flex:0 0 auto;width:100%;height:min(42vh, 360px);min-height:170px;max-height:420px;overflow:hidden;position:relative}
 #startMap svg{width:100%;height:100%;display:block}
-.start-top{padding:28px 40px 10px;text-align:center;flex-shrink:0}
-.start-top h1{font-size:42px;color:var(--txt);letter-spacing:4px;text-shadow:0 0 20px rgba(201,162,74,.4);font-weight:800}
+.start-top{padding:22px 36px 8px;text-align:center;flex-shrink:0}
+.start-top h1{font-size:40px;color:var(--txt);letter-spacing:4px;text-shadow:0 0 20px rgba(201,162,74,.4);font-weight:800}
 .start-top .sub{color:var(--gold);letter-spacing:8px;margin-top:6px;font-size:14px}
-.start-bottom{padding:14px 40px 28px;background:linear-gradient(180deg,transparent,var(--bg));flex:0 1 auto;overflow-y:auto;max-height:45vh}
+.start-bottom{padding:12px 36px 28px;background:linear-gradient(180deg,transparent,var(--bg));flex-shrink:0}
 .country-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;max-width:1400px;margin:0 auto}
 .country-card{background:var(--panel);border:1px solid var(--border);border-radius:4px;padding:10px;cursor:pointer;transition:all .12s;display:flex;align-items:center;gap:8px}
 .country-card:hover{border-color:var(--gold);transform:translateY(-2px);background:var(--panel2)}
@@ -207,21 +207,21 @@ button{font-family:inherit;cursor:pointer;color:var(--txt);border:none;backgroun
 
 /* ====== 手机端适配 ====== */
 @media(max-width:640px){
-  /* 开始界面 */
-  #startScreen{overflow-y:auto;-webkit-overflow-scrolling:touch}
-  .start-top{padding:16px 16px 6px}
-  .start-top h1{font-size:26px;letter-spacing:2px}
+  /* 开始界面 - 滑动优化 */
+  #startScreen{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}
+  .start-top{padding:14px 14px 6px}
+  .start-top h1{font-size:24px;letter-spacing:2px}
   .start-top .sub{letter-spacing:3px;font-size:11px}
-  #startMap{height:200px;flex-shrink:0;min-height:120px}
-  .start-bottom{padding:10px 12px 20px}
+  #startMap{height:min(32vh,220px);min-height:150px;flex-shrink:0}
+  .start-bottom{padding:10px 12px 24px}
   .country-grid{grid-template-columns:1fr 1fr;gap:6px}
   .country-card{padding:8px}
   .country-card .cn{font-size:12px}
   .country-card .ci{display:none}
-  .diff-row{gap:4px}
+  .diff-row{gap:4px;margin-bottom:8px}
   .diff-btn{padding:6px 10px;font-size:11px}
-  .go-btn{padding:12px 40px;font-size:15px;letter-spacing:3px}
-  .disc{font-size:10px}
+  .go-btn{padding:14px 44px;font-size:16px;letter-spacing:3px;margin:14px auto 0;position:sticky;bottom:6px;z-index:5}
+  .disc{font-size:10px;margin-top:10px;padding:0 4px}
 
   /* 游戏主界面：改为单列布局 */
   #gameScreen{height:100vh;height:100dvh}
